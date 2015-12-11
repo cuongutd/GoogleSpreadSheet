@@ -43,8 +43,6 @@ import java.util.List;
 public class MainActivity extends BaseAppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
-    private int MY_ACTIVITYS_AUTH_REQUEST_CODE = 1000;
-
     private ImageView mStudentProfileImg;
     private TextView mUserName;
     private TextView mEmail;
@@ -180,80 +178,15 @@ public class MainActivity extends BaseAppCompatActivity
                 signIn();
                 break;
             case R.id.listfile:
-                new SpreadSheetTask().execute("");
+                //new SpreadSheetTask(this, "LIST_FILES", mAccount.getEmail()).execute();
+                String[] params = {"spreadsheettest", "worksheettest"};
+                new SpreadSheetTask(this, "ADD_LINE", mAccount.getEmail()).execute(params);
                 break;
         }
     }
 
 
 
-    public class SpreadSheetTask extends AsyncTask<String, Integer, String> {
 
-        private final String LOG_TAG = SpreadSheetTask.class.getSimpleName();
-
-        private void listFiles(){
-
-            SpreadsheetService service =
-                    new SpreadsheetService("MySpreadsheetIntegration");
-            service.setProtocolVersion(SpreadsheetService.Versions.V3);
-            String token = getGoogleSheetToken();
-
-            service.setHeader("Authorization", "Bearer " + token);
-
-            try {
-                // Define the URL to request.  This should never change.
-                URL SPREADSHEET_FEED_URL = new URL(
-                        "https://spreadsheets.google.com/feeds/spreadsheets/private/full");
-
-                // Make a request to the API and get all spreadsheets.
-                SpreadsheetFeed feed = service.getFeed(SPREADSHEET_FEED_URL, SpreadsheetFeed.class);
-                List<SpreadsheetEntry> spreadsheets = feed.getEntries();
-
-                // Iterate through all of the spreadsheets returned
-                for (SpreadsheetEntry spreadsheet : spreadsheets) {
-                    // Print the title of this spreadsheet to the screen
-                    System.out.println(spreadsheet.getTitle().getPlainText());
-                }
-            }catch(Exception e){
-                e.printStackTrace();
-            }
-
-        }
-
-
-
-        private String getGoogleSheetToken(){
-
-            String SCOPE = "oauth2:https://docs.google.com/feeds/ https://docs.googleusercontent.com/ https://spreadsheets.google.com/feeds/";
-            Account accountAdmin = new Account(mAccount.getEmail(), "com.google");
-            String token = null;
-            try{
-                token = GoogleAuthUtil.getToken(MainActivity.this, accountAdmin.name, SCOPE);
-            } catch (GooglePlayServicesAvailabilityException playEx) {
-                playEx.printStackTrace();
-            } catch (UserRecoverableAuthException userAuthEx) {
-                // Start the user recoverable action using the intent returned by
-                // getIntent()
-                MainActivity.this.startActivityForResult(
-                        userAuthEx.getIntent(), MY_ACTIVITYS_AUTH_REQUEST_CODE);
-            } catch (IOException transientEx) {
-                transientEx.printStackTrace();
-            } catch (GoogleAuthException authEx) {
-                authEx.printStackTrace();
-            }
-
-            return token;
-        }
-
-        @Override
-        protected String doInBackground(String... artistName){
-            listFiles();
-            return "";
-        }
-
-        @Override
-        protected void onPostExecute(String result) {
-        }
-    }
 
 }
