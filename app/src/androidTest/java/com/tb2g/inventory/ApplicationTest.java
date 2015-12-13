@@ -1,4 +1,4 @@
-package com.tb2g.spreadsheet;
+package com.tb2g.inventory;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

@@ -1,17 +1,26 @@
-package com.tb2g.spreadsheet;
+package com.tb2g.inventory.activity;
 
 import android.accounts.Account;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
+
+import com.google.android.gms.auth.GoogleAuthException;
+import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.auth.GooglePlayServicesAvailabilityException;
+import com.google.android.gms.auth.UserRecoverableAuthException;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -20,19 +29,22 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
+import com.tb2g.inventory.R;
+import com.tb2g.inventory.activity.adapter.BaseResultReceiver;
+import com.tb2g.inventory.util.Constants;
 
-import java.util.Map;
+import java.io.IOException;
 
 /**
  * Created by Cuong on 9/10/2015.
  * To track activity's lifecycle. Other activities in the project extend this base class
  */
-public abstract class BaseAppCompatActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
+public abstract class BaseAppCompatActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener
+        , BaseResultReceiver.Receiver {
 
     private String LOG_TAG = this.getClass().getSimpleName();
 
-    private static final int RC_GET_TOKEN = 9002;
+    protected BaseResultReceiver mReceiver;
 
     protected GoogleApiClient mGoogleApiClient;
 
@@ -52,30 +64,22 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity implements
         } else {
             // make sure all data is wiped out
             //Signed out, show unauthenticated UI. redirect user to login screen
-            Toast.makeText(this, "Not logged in!", Toast.LENGTH_LONG).show();
-            //signIn();
+            startActivity(new Intent(this, LoginActivity.class));
+            return;
         }
     }
 
-    protected void signIn() {
-        Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
-        startActivityForResult(signInIntent, RC_GET_TOKEN);
-    }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == RC_GET_TOKEN) {
-            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            handleSignInResult(result);
-        }
-    }
+//    private void setGoogleSheetToken() {
+//        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+//        String token = sharedPref.getString(Constants.SHARED_PREF_SHEET_TOKEN, "");
+//        if (TextUtils.isEmpty(token))
+//            new GoogleSheetTokenHelper().execute(mAccount.getEmail());
+//
+//    }
 
     // [END handleSignInResult]
     protected boolean isConnectedToInternet() {
-        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager manager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = manager.getActiveNetworkInfo();
         return networkInfo != null && networkInfo.isConnected();
     }
@@ -103,8 +107,11 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity implements
 
         logd("onCreate");
 
+        mReceiver = new BaseResultReceiver(new Handler());
+        mReceiver.setReceiver(this);
+
         mGoogleSignInOptions = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken("64477000012-0815f5uc8rpdps8qta0ctm5j4ob58ldo.apps.googleusercontent.com")
+                .requestIdToken(getString(R.string.client_id))
                 .requestEmail()
                 .build();
 
@@ -148,6 +155,12 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity implements
     @Override
     protected void onStart() {
         super.onStart();
+
+        if (mReceiver.isNull()) {
+            mReceiver = new BaseResultReceiver(new Handler());
+            mReceiver.setReceiver(this);
+        }
+
         OptionalPendingResult<GoogleSignInResult> opr = Auth.GoogleSignInApi.silentSignIn(mGoogleApiClient);
         if (opr.isDone()) {
             // If the user's cached credentials are valid, the OptionalPendingResult will be "done"
@@ -187,21 +200,24 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity implements
     protected void onStop() {
         super.onStop();
         logd("onStop");
+        mReceiver.setReceiver(null); // clear receiver so no leaks.
+
     }
 
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         // An unresolvable error has occurred and Google APIs (including Sign-In) will not
         // be available.
-        if (!isConnectedToInternet()){
+        if (!isConnectedToInternet()) {
             Toast.makeText(this, "Please internet connection!", Toast.LENGTH_LONG);
         }
-        logd( "onConnectionFailed:" + connectionResult);
+        logd("onConnectionFailed:" + connectionResult);
     }
+
+
 
     protected void logd(String msg) {
         Log.d(LOG_TAG, msg);
     }
-
 
 }

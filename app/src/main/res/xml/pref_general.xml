@@ -1,0 +1,39 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="pref_key_searchupc"
+        android:title="SearchUPC.com">
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="text"
+            android:key="@string/shared_pref_upcdb_key"
+            android:maxLines="2"
+            android:selectAllOnFocus="true"
+            android:singleLine="false"
+            android:title="@string/pref_access_token"
+            android:defaultValue="@string/shared_pref_upcdb_default_value"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_key_spreadsheet"
+        android:title="Google SpreadSheet">
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="text"
+            android:key="@string/shared_pref_inv_filename"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_inv_file"
+            android:defaultValue="@string/shared_pref_inv_filename_default_value"/>
+
+        <EditTextPreference
+            android:capitalize="words"
+            android:inputType="text"
+            android:key="@string/shared_pref_tran_filename"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/pref_tran_file"
+            android:defaultValue="@string/shared_pref_tran_filename_default_value"/>
+    </PreferenceCategory>
+</PreferenceScreen>
