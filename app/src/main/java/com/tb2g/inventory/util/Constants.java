@@ -25,7 +25,7 @@ public class Constants {
     public static final String EXTRA_PENDING_INVENTORY_TRAN = "com.tb2g.spreadsheet.EXTRA_PENDING_INVENTORY_TRAN";
     public static final String EXTRA_INVENTORY_ITEMS = "com.tb2g.spreadsheet.EXTRA_INVENTORY_ITEMS";
     public static final String EXTRA_LOGIN_RETURN_FLAG = "com.tb2g.spreadsheet.EXTRA_LOGIN_RETURN_FLAG";
-
+    public static final String EXTRA_GOOGLE_ACCOUNT = "com.tb2g.spreadsheet.EXTRA_GOOGLE_ACCOUNT";
 
     public static final int RESULT_CODE_NO_CONNECTION = -1;
     public static final int RESULT_CODE_INV_LOCATION = 0;

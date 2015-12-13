@@ -31,6 +31,7 @@ import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.tb2g.inventory.R;
 import com.tb2g.inventory.activity.adapter.BaseResultReceiver;
+import com.tb2g.inventory.model.IntentResultBus;
 import com.tb2g.inventory.util.Constants;
 
 import java.io.IOException;
@@ -220,4 +221,10 @@ public abstract class BaseAppCompatActivity extends AppCompatActivity implements
         Log.d(LOG_TAG, msg);
     }
 
+    @Override
+    public void onReceiveResult(int resultCode, Bundle resultData) {
+        IntentResultBus result = resultData.getParcelable(Constants.EXTRA_INTENT_SERVICE_RESULT);
+        if (result != null && result.getError() != null)
+            Toast.makeText(this, result.getError().errorMsg, Toast.LENGTH_LONG).show();
+    }
 }

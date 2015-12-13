@@ -1,17 +1,21 @@
 package com.tb2g.inventory.activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.preference.PreferenceManager;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawable;
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.SignInButton;
@@ -52,12 +56,13 @@ public class LoginActivity extends BaseAppCompatActivity implements View.OnClick
         mReturnImmediately = getIntent().getBooleanExtra(Constants.EXTRA_LOGIN_RETURN_FLAG, true);
         if (savedInstanceState != null && savedInstanceState.containsKey(Constants.EXTRA_LOGIN_RETURN_FLAG))
             mReturnImmediately = savedInstanceState.getBoolean(Constants.EXTRA_LOGIN_RETURN_FLAG);
-
+        if (savedInstanceState != null && savedInstanceState.containsKey(Constants.EXTRA_GOOGLE_ACCOUNT))
+            mAccount = savedInstanceState.getParcelable(Constants.EXTRA_GOOGLE_ACCOUNT);
 
         // Button listeners
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         findViewById(R.id.sign_out_button).setOnClickListener(this);
-        findViewById(R.id.disconnect_button).setOnClickListener(this);
+        //findViewById(R.id.disconnect_button).setOnClickListener(this);
 
         SignInButton signInButton = (SignInButton)findViewById(R.id.sign_in_button);
         signInButton.setSize(SignInButton.SIZE_WIDE);
@@ -93,6 +98,7 @@ public class LoginActivity extends BaseAppCompatActivity implements View.OnClick
     }
 
     private void signIn() {
+        mReturnImmediately = true;
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_GET_TOKEN);
     }
@@ -104,6 +110,9 @@ public class LoginActivity extends BaseAppCompatActivity implements View.OnClick
                         // make sure all data is wiped out
                         mAccount = null;
                         updateUI(false);
+//                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+//                        String spreadSheetToken = sharedPref.getString(Constants.SHARED_PREF_SHEET_TOKEN, "");
+//                        GoogleAuthUtil.invalidateToken(LoginActivity.this, spreadSheetToken);
                     }
                 });
     }
@@ -167,9 +176,9 @@ public class LoginActivity extends BaseAppCompatActivity implements View.OnClick
             case R.id.sign_out_button:
                 signOut();
                 break;
-            case R.id.disconnect_button:
-                revokeAccess();
-                break;
+//            case R.id.disconnect_button:
+//                revokeAccess();
+//                break;
         }
     }
 
@@ -177,10 +186,30 @@ public class LoginActivity extends BaseAppCompatActivity implements View.OnClick
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(Constants.EXTRA_LOGIN_RETURN_FLAG, mReturnImmediately);
+        outState.putParcelable(Constants.EXTRA_GOOGLE_ACCOUNT, mAccount);
     }
 
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
     }
 
+    int backButtonCount = 0;
+    @Override
+    public void onBackPressed() {
+        if (mAccount == null)//exit, dont go back
+            if(backButtonCount >= 1)
+            {
+                Intent intent = new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_HOME);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+            else
+            {
+                Toast.makeText(this, "Press the back button once again to close the application.", Toast.LENGTH_SHORT).show();
+                backButtonCount++;
+            }
+        else
+            super.onBackPressed();
+    }
 }

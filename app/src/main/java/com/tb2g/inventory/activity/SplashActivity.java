@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.auth.GoogleAuthException;
@@ -43,13 +45,10 @@ public class SplashActivity extends BaseAppCompatActivity {
 
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
+        super.onReceiveResult(resultCode, resultData);
+        IntentResultBus result = resultData.getParcelable(Constants.EXTRA_INTENT_SERVICE_RESULT);
         switch (resultCode) {
             case Constants.RESULT_CODE_INV_LOCATION:
-                IntentResultBus result = resultData.getParcelable(Constants.EXTRA_INTENT_SERVICE_RESULT);
-
-                if (result.getError() != null)
-                    Toast.makeText(this, result.getError().errorMsg, Toast.LENGTH_LONG).show();
-
                 Intent intent = new Intent(this, InventoryActivity.class);
                 intent.putStringArrayListExtra(Constants.EXTRA_LOCATION, (ArrayList<String>)result.getLocations());
                 startActivity(intent);
@@ -57,6 +56,15 @@ public class SplashActivity extends BaseAppCompatActivity {
 
                 break;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Constants.REQUEST_CODE_AUTH_SHEET) //user permission screen showed
+            if (resultCode == RESULT_OK) {//user hit allow button
+                //try to get token again
+                new GoogleSheetTokenHelper().execute(mAccount.getEmail());
+            }
     }
 
 
@@ -67,7 +75,7 @@ public class SplashActivity extends BaseAppCompatActivity {
 
             String email = params[0];
 
-            String SCOPE = "oauth2:https://docs.google.com/feeds/ https://docs.googleusercontent.com/ https://spreadsheets.google.com/feeds/";
+            String SCOPE = "oauth2:https://spreadsheets.google.com/feeds/";
             Account accountAdmin = new Account(email, "com.google");
             String token = null;
             try {
@@ -93,14 +101,18 @@ public class SplashActivity extends BaseAppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(SplashActivity.this);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString(Constants.SHARED_PREF_SHEET_TOKEN, result);
-            editor.commit();
+            Log.d("SplashActivity", "onPostExecute");
 
-            //if things go well, load google sheet data
-            IntentService.getInventoryLocations(SplashActivity.this, mReceiver);
+            if (!TextUtils.isEmpty(result)) {
+                Log.d("SplashActivity", result);
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(SplashActivity.this);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString(Constants.SHARED_PREF_SHEET_TOKEN, result);
+                editor.commit();
 
+                //if things go well, load google sheet data
+                IntentService.getInventoryLocations(SplashActivity.this, mReceiver);
+            }
         }
     }
 }

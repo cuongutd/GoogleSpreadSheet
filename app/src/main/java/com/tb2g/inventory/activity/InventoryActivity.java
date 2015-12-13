@@ -129,7 +129,7 @@ public class InventoryActivity extends BaseAppCompatActivity {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
         }else if (id == R.id.action_refresh){
-            refresh();
+            deepRefresh();
             return true;
         }else if (id == R.id.action_account){
             Intent intent = new Intent(this, LoginActivity.class);
@@ -233,7 +233,7 @@ public class InventoryActivity extends BaseAppCompatActivity {
     @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
         hideProgressDialog();
-
+        super.onReceiveResult(resultCode, resultData);
         IntentResultBus data = resultData.getParcelable(Constants.EXTRA_INTENT_SERVICE_RESULT);
 
         switch (resultCode) {
@@ -246,7 +246,19 @@ public class InventoryActivity extends BaseAppCompatActivity {
                 break;
             case Constants.RESULT_CODE_INV_UPDATE:
                 refresh();
+            case Constants.RESULT_CODE_INV_LOCATION: //deep refresh case
+                finish();
+                Intent intent = new Intent(this, InventoryActivity.class);
+                intent.putStringArrayListExtra(Constants.EXTRA_LOCATION, (ArrayList<String>)data.getLocations());
+                startActivity(intent);
+                break;
         }
+    }
+
+    private void deepRefresh(){
+        showProgressDialog();
+        IntentService.getInventoryLocations(this, mReceiver);
+
     }
 
     private void refresh(){
